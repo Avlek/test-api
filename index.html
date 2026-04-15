@@ -1,10 +1,106 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GREEN-API</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <header>
+        <span class="logo">GREEN-API Tester</span>
+    </header>
+    <div class="container">
+        <div class="left">
+            <div class="section">
+                <div class="section-title">Подключение</div>
+                <input type="text" id="idInstance" placeholder="idInstance">
+                <input type="text" id="apiTokenInstance" placeholder="ApiTokenInstance">
+            </div>
+            <div class="section">
+                <button onclick="callMethod('getSettings')">getSettings</button>
+                <button onclick="callMethod('getStateInstance')">getStateInstance</button>
+            </div>
+            <div class="section">
+                <div class="section-title">Отправка сообщения</div>
+                <input type="text" id="chatIdMsg" placeholder="77771234567">
+                <textarea id="message" placeholder="Hello World!"></textarea>
+                <button onclick="sendMessage()">sendMessage</button>
+            </div>
+            <div class="section">
+                <div class="section-title">Отправка файла</div>
+                <input type="text" id="chatIdFile" placeholder="77771234567">
+                <input type="text" id="fileUrl" placeholder="https://my.site.com/img/horse.png">
+                <input type="text" id="fileName" placeholder="horse.png">
+                <button onclick="sendFileByUrl()">sendFileByUrl</button>
+            </div>
+        </div>
+        <div class="right">
+            <label>Ответ:</label>
+            <textarea id="response" readonly></textarea>
+        </div>
+    </div>
+    <footer>GREEN API &copy; 2025</footer>
+    <script>
+        function apiUrl(method) {
+            const id = document.getElementById('idInstance').value.trim();
+            const token = document.getElementById('apiTokenInstance').value.trim();
+            return `/api/waInstance${id}/${method}/${token}`;
+        }
 
+        function showResponse(data) {
+            document.getElementById('response').value = JSON.stringify(data, null, 2);
+        }
+
+        function showError(err) {
+            document.getElementById('response').value = 'Ошибка: ' + err;
+        }
+
+        function formatChatId(raw) {
+            const digits = raw.replace(/\D/g, '');
+            return digits.includes('@') ? raw : digits + '@c.us';
+        }
+
+        async function callMethod(method) {
+            try {
+                const res = await fetch(apiUrl(method));
+                const data = await res.json();
+                showResponse(data);
+            } catch (e) { showError(e.message); }
+        }
+
+        async function sendMessage() {
+            try {
+                const res = await fetch(apiUrl('sendMessage'), {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        chatId: formatChatId(document.getElementById('chatIdMsg').value.trim()),
+                        message: document.getElementById('message').value
+                    })
+                });
+                const data = await res.json();
+                showResponse(data);
+            } catch (e) { showError(e.message); }
+        }
+
+        async function sendFileByUrl() {
+            try {
+                const url = document.getElementById('fileUrl').value.trim();
+                const name = document.getElementById('fileName').value.trim() || url.split('/').pop() || 'file';
+                const res = await fetch(apiUrl('sendFileByUrl'), {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        chatId: formatChatId(document.getElementById('chatIdFile').value.trim()),
+                        urlFile: url,
+                        fileName: name
+                    })
+                });
+                const data = await res.json();
+                showResponse(data);
+            } catch (e) { showError(e.message); }
+        }
+    </script>
 </body>
 </html>
